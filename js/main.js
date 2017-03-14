@@ -1,94 +1,134 @@
-var container = d3.select("body")
-	.append("svg")
-	.datum(500)
-	.attr("width", function(d){
-		return d+"px";
-		//SUPER USEFULL IF YOU HAVE DYNAMIC DATA/DATUM
-		console.log(d);
-	})
-	.attr("height", "500px")
-	.attr("class", "container");
-	//name class as element variable for clarity
-	// .style("background-color", "gray");
-	////^that would go in style.css
+//main js script for d3 lab demo
 
-// var textElement = container.append("text");
-// var textElement2 = container.append("text");
-// var textElement3 = container.append("text");
+//execute script when window is loaded
+window.onload = function(){
+	// get body element from DOM
 
+	//SVG dimension variables
+    var w = 900, h = 500;
 
-//can be outside of chain
-var x = d3.scaleLinear() //create the scale
-    .domain([0, 3]) //input min and max
-    .range([90, 810]); //output min and max
-//creates a linear scale, and stores it to variable x
+    var container = d3.select("body") 
+    	.append("svg") //put a new svg in <body>
+		.attr("width", w) //assign width
+        .attr("height", h) //assign height
+        .attr("class", "container") //assigning class (same as the block name) for styling & future ref
+        .style("background-color", "rgba(0,0,0,0.3)"); // color
 
-console.log(x);
+//preserve the svg append (you should only have one append or element in each block)
+    //innerRect block
+    var innerRect = container.append("rect") //put a new rect in <svg>
+    	.datum(400)
+		.attr("width", function(d){ //rectangle width // d = 400
+            return d * 2; //400 * 2 = 800
+        }) 
+        .attr("height", function(d){ //rectangle height
+            return d; //400
+        })
+        .attr("class", "innerRect") //class name, same as block name!
+        .attr("x", 50) //position from left on the x axis
+        .attr("y", 50) //position from top on the y axis
+        .style("fill", "#f4f1e6"); //fill color, semi colon @ end of bloxk
 
-//geneartor function, a function that generates another function
+	// console.log(innerRect)
 
-
-//look at d2scale in github documentation
-
-
-d3.json("data/MegaCities.geojson", function(data){
-			// console.log(data);
-			// //you should get the geojson
-
-		//to reference container use container.selectAll
-		var textElements = container.selectAll(".textElement");
-			// all the matching textElements
-			//** can also create an empty seect
-		// only create one operand per block (append)
-		//if you need to append, make a separate element
-
-		//you can put anything there, and if it doesn't exist,
-		//to create an empty selection
-			// .data([20, "robust", 60, "Veep", 80])
-			//.data cannot handle a single number or string value other than ARRY
-			//MUST pass ARRAY to .data
-
-			.data(data.features)
-
-			.enter()
-			//magically applies data to the selection!
-			//data in groups (object) Under Console Properties tab
-
-			.append("text")
-			.attr("class", "textElement")
-			.attr("x", 0)
-			.attr("y", function(d, i){
-				console.log(x(d.properties.Pop_2015));
-				return x(d.properties.Pop_2015);
-				//will return corresponding range value per domain
-			})
-
-			.text(function(d){
-				console.log(d);
-				return d;
-			
-			});
-
-//useful not exactly for text, but that's just this example/demo
+	    //bdata must ALWAYS be an array in d3
+    var cityPop = [
+        { 
+            city: 'Chicago',
+            population: 2720546
+        },
+        {
+            city: 'Montreal',
+            population: 1704694
+        },
+        {
+            city: 'Boston',
+            population: 667137
+        },
+        {
+            city: 'Philadelphia',
+            population: 1567442
+        }
+    ];
 
 
-		//select all sets up a loop
+    //find min value of the cityPop array
+    var minPop = d3.min(cityPop, function(d){
+        return d.population;
+    });
+
+    //find max value of cityPop array
+    var maxPop = d3.max(cityPop, function(d){
+        return d.population;
+    });
+
+    //scale for circles center y coordinate
+    var y = d3.scaleLinear()
+        .range([450, 50]) //was 430, 95
+        .domain([//was minPop, maxPop
+            0,
+            3000000
+        ]);
+
+    //below data array, above circles
+    var x = d3.scaleLinear() //create linear scale
+        .range([90, 810]) //output min, max
+        .domain([0, 3]); //input min, max
+
+        // console.log(x)
+    		// function scale() is the result
+
+    //above circles block
+    //color scale generator 
+    var color = d3.scaleLinear()
+        .range([
+            "#f2f0f7", //used color scheme from color brewer
+            "#6a51a3"
+        ])
+        .domain([
+            minPop, 
+            maxPop
+        ]);
+
+    var circles = container.selectAll(".circles") //empty selec
+        .data(cityPop) //feed in cityPop data array (data must always be passed as array!)
+        .enter() //join data to slection
+        .append("circle") //add circle for each datum
+        .attr("class", "circles") //apply class name to circles (same as block name)
+        .attr("id", function(d){ //circle radius
+            return d.city;
+        })
+        .attr("r", function(d){
+            //calculate radius based on population value as circle area
+            var area = d.population * 0.00125; //adjusted because my cities are quite populous
+            return Math.sqrt(area/Math.PI);
+        })
+        .attr("cx", function(d, i){
+            //use the linear scale generator to place each circle horizontally
+            return x(i);
+        })
+        //apply scale to population values
+        .attr("cy", function(d){
+            return y(d.population);
+        })
+        .style("fill", function(d, i){ //add a fill based on the color scale generator
+            return color(d.population);
+        })
+        .style("stroke", "#000"); //black circle stroke
+
+
+    //below circles block...create y axis generator
+    var yAxis = d3.axisLeft(y);
+
+    //create axis g element and add axis
+    var axis = container.append("g")
+        .attr("class", "axis")
+        .attr("transform", "translate(50, 0)");
+    
+    yAxis(axis);
+}
 
 
 
 
-		console.log(textElements);
-})
 
-//the body/select is the operand
-
-
-//you can chain methods
-//don't put semi-colon until very end of block
-//datumcoordinate system revolved around ellipsoid
-
-
-
-
-
-console.log(container)
